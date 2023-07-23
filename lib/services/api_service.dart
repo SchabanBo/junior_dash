@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:gpt/helpers/constants.dart';
-import 'package:gpt/services/env_service.dart';
 import 'package:http/http.dart' as http;
+
+import '../helpers/constants.dart';
+import 'env_service.dart';
 
 class ApiService {
   Future<String> chat({

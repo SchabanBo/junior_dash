@@ -1,10 +1,11 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:gpt/helpers/int_extension.dart';
+import 'package:junior_dash/helpers/int_extension.dart';
 import 'package:logger/logger.dart';
 
 import '../helpers/constants.dart';
+import 'env_service.dart';
 
 class LoggingService {
   Future<void> createLogger(bool isVerbose) async {
@@ -38,7 +39,7 @@ class LoggingService {
     return _FileLogOutput(file);
   }
 
-  String _getLogsDirectoryPath() => '$workingDirectory/logs';
+  String _getLogsDirectoryPath() => '${EnvService.workingDirectory}/logs';
 
   /// Deletes all log files older than 7 days
   Future<void> cleanupLogs() async {

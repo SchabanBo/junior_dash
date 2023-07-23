@@ -2,12 +2,12 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:args/command_runner.dart';
-import 'package:gpt/commands/debug_command.dart';
-import 'package:gpt/helpers/constants.dart';
-import 'package:gpt/services/shell_service.dart';
 
+import '../helpers/constants.dart';
 import '../prompts/build_prompts.dart';
 import '../services/api_service.dart';
+import '../services/shell_service.dart';
+import 'debug_command.dart';
 
 class BuildCommand extends Command {
   BuildCommand() {
@@ -51,7 +51,7 @@ class BuildCommand extends Command {
   Future<void> run() async {
     await _parseArgs();
     await _createProject();
-    await _analyzeApp();
+    await _wrapUp();
     logger.i('App built successfully');
   }
 
@@ -75,7 +75,7 @@ class BuildCommand extends Command {
   }
 
   Future<void> _createProject() async {
-    await ShellService.run('flutter create $projectName');
+    await ShellService.run('flutter create $projectName -e');
     Directory.current = '${Directory.current.path}/$projectName';
     files = await _getFilesStructure();
     shredDependencies = await _getShredDependencies();
@@ -103,19 +103,7 @@ class BuildCommand extends Command {
     }
   }
 
-  Future<void> _analyzeApp() async {
-    final result = await ShellService.run('flutter pub get');
-    final analyzerResult = await ShellService.run('flutter analyze');
-    result.combine(analyzerResult);
-    if (!result.hasErrors) {
-      ShellService.run('code .');
-      return;
-    }
-    logger.e('Analyzing app result : $result');
-
-    /// write the errors to a file
-    final errorsFile = File('errors.txt');
-    await errorsFile.writeAsString(result.toString());
+  Future<void> _wrapUp() async {
     if (dryBuild) {
       ShellService.run('code .');
       return;
@@ -147,8 +135,8 @@ class BuildCommand extends Command {
 
   Future<String> _getShredDependencies() async {
     final result = await ApiService().chat(
-      system: BuildPrompts.shredDependencies(prompt, projectName, []),
-      user: prompt,
+      system: BuildPrompts.shredDependencies(prompt, projectName),
+      user: 'Generate shred dependencies',
     );
     logger.i('Shred Dependencies: $result');
     return result;

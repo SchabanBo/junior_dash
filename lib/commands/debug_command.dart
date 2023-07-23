@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:args/command_runner.dart';
 
+import '../helpers/constants.dart';
 import '../services/shell_service.dart';
 
 class DebugCommand extends Command {
@@ -21,13 +23,27 @@ class DebugCommand extends Command {
   String get name => 'debug';
 
   @override
-  FutureOr run() async {}
+  FutureOr run() async {
+    await _parseArgs();
+    await _runAnalyze();
+  }
 
   Future<void> _parseArgs() async {
     errorsFile ??= argResults?['errors'] as String?;
   }
 
-  Future<void> _runPubGet() async {
-    final errors = await ShellService.run('flutter pub get');
+  Future<void> _runAnalyze() async {
+    final result = await ShellService.run('flutter pub get');
+    final analyzerResult = await ShellService.run('flutter analyze');
+    result.combine(analyzerResult);
+    if (!result.hasErrors) {
+      ShellService.run('code .');
+      return;
+    }
+    logger.e('Analyzing app result : $result');
+
+    /// write the errors to a file
+    final errorsFile = File('errors.md');
+    await errorsFile.writeAsString(result.toFile());
   }
 }
