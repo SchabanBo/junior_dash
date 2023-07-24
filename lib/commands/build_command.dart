@@ -38,7 +38,6 @@ class BuildCommand extends Command {
   final Map<String, String> project = {};
   late final String projectName;
   late String prompt;
-  late final String shredDependencies;
   late final bool dryBuild;
 
   @override
@@ -75,18 +74,17 @@ class BuildCommand extends Command {
   }
 
   Future<void> _createProject() async {
+    logger.i('Creating project: $projectName');
     await ShellService.run('flutter create $projectName -e');
     Directory.current = '${Directory.current.path}/$projectName';
     files = await _getFilesStructure();
-    shredDependencies = await _getShredDependencies();
     final chatHistory = <ChatHistory>[];
     chatHistory.add(ChatHistory(
       ChatRole.system,
-      BuildPrompts.fileContentSystem(
-          prompt, projectName, files, shredDependencies),
+      BuildPrompts.fileContentSystem(prompt, projectName, files),
     ));
     for (var fileName in files) {
-      logger.i('Building file: $fileName');
+      logger.i('Generating file: $fileName');
       final fileContent = await ApiService().chat(
         history: chatHistory,
         user: BuildPrompts.fileContentUser(fileName),
@@ -104,13 +102,15 @@ class BuildCommand extends Command {
   }
 
   Future<void> _wrapUp() async {
+    await File('prompt.md').writeAsString(prompt);
     if (dryBuild) {
       ShellService.run('code .');
       return;
     }
 
     /// fix the errors
-    await DebugCommand(errorsFile: 'errors.txt').run();
+    logger.i('Checking errors');
+    await DebugCommand().run();
     ShellService.run('code .');
   }
 
@@ -131,14 +131,5 @@ class BuildCommand extends Command {
       logger.i('${++i}- $file');
     }
     return files.map((e) => e.toString()).toList();
-  }
-
-  Future<String> _getShredDependencies() async {
-    final result = await ApiService().chat(
-      system: BuildPrompts.shredDependencies(prompt, projectName),
-      user: 'Generate shred dependencies',
-    );
-    logger.i('Shred Dependencies: $result');
-    return result;
   }
 }

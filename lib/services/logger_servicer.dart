@@ -142,6 +142,11 @@ class _ConsoleLogOutput extends LogOutput {
   @override
   void output(OutputEvent event) {
     if (event.level.index < level.index) return;
-    stdout.writeln(event.lines.join('\n'));
+    for (var line in event.lines) {
+      line = line.substring(21);
+      final i = line.indexOf('|');
+      line = line.substring(i + 1);
+      stdout.writeln(line);
+    }
   }
 }

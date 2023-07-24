@@ -15,7 +15,7 @@ class ShellService {
     });
     final errors = <String>[];
     process.stderr.transform(utf8.decoder).listen((data) {
-      logger.e(data);
+      logger.d(data);
       errors.add(data);
     });
 

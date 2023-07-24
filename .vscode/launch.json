@@ -15,6 +15,16 @@
             ]
         },
         {
+            "name": "debug counter_app",
+            "request": "launch",
+            "type": "dart",
+            "program": "bin/main.dart",
+            "args": [
+                "debug",
+                "--path=C:/Users/Bochi/Desktop/workspace/counter_app"
+            ]
+        },
+        {
             "name": "weather_app",
             "request": "launch",
             "type": "dart",

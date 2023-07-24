@@ -2,11 +2,13 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:junior_dash/helpers/string_extension.dart';
 
 import '../helpers/constants.dart';
 import 'env_service.dart';
 
 class ApiService {
+  static num usedToken = 0;
   Future<String> chat({
     String? system,
     required String user,
@@ -40,10 +42,11 @@ class ApiService {
         'Chat took ${timer.elapsedMilliseconds} ms with status code ${response.statusCode}');
     logger.v('Response: ${response.body}');
     if (response.statusCode == 200) {
-      final content =
-          jsonDecode(response.body)['choices'][0]['message']['content'];
+      final body = jsonDecode(response.body);
+      final content = body['choices'][0]['message']['content'];
       history.add(ChatHistory(ChatRole.assistant, content));
-      return content;
+      usedToken += body['usage']['total_tokens'];
+      return content.toString().cleanCodeFences();
     } else {
       logger.e('Error: ${response.body}');
       logger.d('Request: ${jsonEncode({"messages": messages})}');

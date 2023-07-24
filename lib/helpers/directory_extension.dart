@@ -24,4 +24,9 @@ class ProjectFile {
   final String content;
 
   const ProjectFile(this.path, this.content);
+
+  @override
+  String toString() {
+    return '''### $path\n\n ```dart \n$content \n```''';
+  }
 }
