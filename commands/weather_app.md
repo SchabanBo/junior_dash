@@ -1,4 +1,4 @@
-# Weather App
+# weather_app
 
 ## Description
 The Weather App is a simple and intuitive mobile application that provides users with up-to-date weather information for various locations. Users can easily check the current weather conditions, temperature, humidity, wind speed, and forecasts for the next few days.

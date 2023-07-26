@@ -28,6 +28,10 @@ class JuniorDash {
     await runner.runCommand(args);
     logger.i('Used tokens: ${ApiService.usedToken}');
     logger.i('Junior dash Finished in ${timer.elapsed}');
+    if (EnvService.finishCommand.isNotEmpty) {
+      logger.i('Running finish command ${EnvService.finishCommand}');
+      Process.run(EnvService.finishCommand, [], runInShell: true);
+    }
   }
 
   Future<void> _ensureBaseDirectory() async {

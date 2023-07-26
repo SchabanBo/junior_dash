@@ -1,10 +1,10 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:args/command_runner.dart';
 import 'package:junior_dash/helpers/directory_extension.dart';
 import 'package:junior_dash/helpers/list_extension.dart';
+import 'package:junior_dash/helpers/string_extension.dart';
 import 'package:junior_dash/prompts/debug_prompts.dart';
 import 'package:junior_dash/services/api_service.dart';
 
@@ -75,14 +75,27 @@ class DebugCommand extends Command {
       errors.add('$error.');
       i++;
     }
-    await errorFile.writeAsString(errors.toMarkdownList().trim());
-    if (errors.isEmpty) {
-      ShellService.run('code .');
-      return false;
-    }
+    var debugResult = errors.toMarkdownList();
+    debugResult += await _checkMissingImplementations();
+    debugResult = debugResult.trim();
+    await errorFile.writeAsString(debugResult);
+    if (debugResult.isEmpty) return false;
+
     logger.i('${errors.length} errors found');
     logger.i(errors.toMarkdownList());
     return true;
+  }
+
+  Future<String> _checkMissingImplementations() async {
+    final files = await Directory('lib').readDartFilesRecursively();
+    final prompt = await File('prompt.md').readAsString();
+    final response = await ApiService().chat(
+      system: DebugPrompts.checkCode(prompt, files.join()),
+      user: 'Check missing implementations',
+    );
+    logger.i('Missing implementations:\n $response');
+    if (response.contains('Nothing found to fix')) return '';
+    return '\n## Missing implementations\n$response';
   }
 
   Future<void> _fix() async {
@@ -91,13 +104,12 @@ class DebugCommand extends Command {
     final errors = await File(_debugFile).readAsString();
     final history = <ChatHistory>[];
     final response = await ApiService().chat(
-      system: DebugPrompts.filesToFixSystem(prompt, files.join(''), errors),
+      system: DebugPrompts.filesToFixSystem(prompt, files.join(), errors),
       user: DebugPrompts.filesToFixUser(),
       history: history,
     );
-    final filesToFix =
-        jsonDecode(response.replaceAll('\\', '/')) as List<dynamic>;
-    logger.i('Files to fix: $filesToFix');
+    final filesToFix = response.toList();
+    logger.i('Files to fix:\n${filesToFix.toMarkdownList()}');
     for (final file in filesToFix) {
       final response = await ApiService().chat(
         user: DebugPrompts.getFile(file as String),

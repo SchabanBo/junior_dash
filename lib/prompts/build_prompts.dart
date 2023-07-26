@@ -22,7 +22,10 @@ Remember that you must obey these things:
 ''';
 
   static String fileContentSystem(
-          String prompt, String projectName, List<String> files) =>
+    String prompt,
+    String projectName,
+    List<String> files,
+  ) =>
       '''
 You are an AI flutter developer who is trying to write a flutter app that will generate code for the user based on their intent.
 
@@ -40,12 +43,11 @@ Make sure to have consistent filenames if you reference other files we are also 
 
 Remember that you must obey these things: 
   - The dart code should be null safe, do not forget to add '?' to variables that are not initialized.
-  - do not stray from the names of the files and the shared dependencies we have decided on
-  - Do not leave any todos, fully implement every feature requested.
+  - Do not leave any todos, fully implement every feature requested and every needed logic.
   - MOST IMPORTANT OF ALL - consider always the purpose of the app.
   - Always just generating the code.
   - keep the code as simple as possible and don't use any EXTERNAL packages.
-    ''';
+''';
 
   static String fileContentUser(String fileName) =>
       '''Now generate only the code for the file $fileName.''';

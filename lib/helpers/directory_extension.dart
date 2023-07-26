@@ -27,6 +27,6 @@ class ProjectFile {
 
   @override
   String toString() {
-    return '''### $path\n\n ```dart \n$content \n```''';
+    return '''### $path\n\n ```dart \n$content \n```\n''';
   }
 }

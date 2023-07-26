@@ -21,7 +21,7 @@
             "program": "bin/main.dart",
             "args": [
                 "debug",
-                "--path=C:/Users/Bochi/Desktop/workspace/counter_app"
+                "--path=counter_app"
             ]
         },
         {
@@ -35,6 +35,16 @@
             ]
         },
         {
+            "name": "debug weather_app",
+            "request": "launch",
+            "type": "dart",
+            "program": "bin/main.dart",
+            "args": [
+                "debug",
+                "--path=weather_app"
+            ]
+        },
+        {
             "name": "to_do_app",
             "request": "launch",
             "type": "dart",
@@ -42,7 +52,16 @@
             "args": [
                 "build",
                 "--file=commands/to_do_app.md",
-                "-d"
+            ]
+        },
+        {
+            "name": "debug to_do_app",
+            "request": "launch",
+            "type": "dart",
+            "program": "bin/main.dart",
+            "args": [
+                "debug",
+                "--path=to_do_list"
             ]
         },
         {

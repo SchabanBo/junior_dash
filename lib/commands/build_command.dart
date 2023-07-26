@@ -70,7 +70,7 @@ class BuildCommand extends Command {
       projectName =
           argResults?['project-name'] as String? ?? await _getProjectName();
     }
-    dryBuild = argResults?['dry-build'] as bool? ?? true;
+    dryBuild = argResults?['dry-build'] as bool? ?? false;
   }
 
   Future<void> _createProject() async {
@@ -103,15 +103,11 @@ class BuildCommand extends Command {
 
   Future<void> _wrapUp() async {
     await File('prompt.md').writeAsString(prompt);
-    if (dryBuild) {
-      ShellService.run('code .');
-      return;
-    }
+    if (dryBuild) return;
 
     /// fix the errors
     logger.i('Checking errors');
     await DebugCommand().run();
-    ShellService.run('code .');
   }
 
   Future<String> _getProjectName() async {
