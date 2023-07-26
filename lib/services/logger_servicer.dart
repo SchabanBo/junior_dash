@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:junior_dash/helpers/int_extension.dart';
 import 'package:logger/logger.dart';
@@ -10,6 +11,7 @@ import 'env_service.dart';
 class LoggingService {
   Future<void> createLogger(bool isVerbose) async {
     logger = Logger(
+      filter: ProductionFilter(),
       printer: _MyPrinter(),
       output: MultiOutput([
         _ConsoleLogOutput(isVerbose ? Level.verbose : Level.info),
@@ -136,17 +138,36 @@ class _MyPrinter extends LogPrinter {
 
 class _ConsoleLogOutput extends LogOutput {
   final Level level;
-
-  _ConsoleLogOutput(this.level);
+  late Timer loadingTimer;
+  int loadingIndex = 0;
+  final loadingIndicators = ['💭', '🔍', '⚒️', '🪲', '⌨️', '🖱️'];
+  _ConsoleLogOutput(this.level) {
+    startLoading();
+  }
 
   @override
   void output(OutputEvent event) {
     if (event.level.index < level.index) return;
+    loadingTimer.cancel();
+    stdout.write('\r');
     for (var line in event.lines) {
       line = line.substring(21);
       final i = line.indexOf('|');
       line = line.substring(i + 1);
       stdout.writeln(line);
     }
+    startLoading();
+  }
+
+  void startLoading() {
+    loadingTimer = Timer.periodic(Duration(milliseconds: 400), (_) {
+      _updateLoadingIndicator();
+    });
+  }
+
+  final _random = Random();
+  void _updateLoadingIndicator() {
+    stdout.write('\r${loadingIndicators[loadingIndex]} Working');
+    loadingIndex = _random.nextInt(loadingIndicators.length);
   }
 }

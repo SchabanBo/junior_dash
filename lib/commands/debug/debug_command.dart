@@ -2,14 +2,14 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:args/command_runner.dart';
+import 'package:junior_dash/commands/debug/debug_prompts.dart';
 import 'package:junior_dash/helpers/directory_extension.dart';
 import 'package:junior_dash/helpers/list_extension.dart';
 import 'package:junior_dash/helpers/string_extension.dart';
-import 'package:junior_dash/prompts/debug_prompts.dart';
 import 'package:junior_dash/services/api_service.dart';
 
-import '../helpers/constants.dart';
-import '../services/shell_service.dart';
+import '../../helpers/constants.dart';
+import '../../services/shell_service.dart';
 
 const _debugFile = 'debug.md';
 
@@ -33,15 +33,15 @@ class DebugCommand extends Command {
     await _parseArgs();
     var index = 0;
     while (await _runAnalyze() && index < 10) {
-      logger.i('Fixing errors for the $index time');
+      logger.i('⚒️ Fixing errors for the $index time');
       await _fix();
       index++;
     }
 
     if (index == 10) {
-      logger.e('Could not fix all errors');
+      logger.e('❌ Could not fix all errors');
     } else {
-      logger.i('No more errors found');
+      logger.i('✅ No more errors found');
     }
   }
 
@@ -61,7 +61,7 @@ class DebugCommand extends Command {
         await File(_debugFile).exists() && await File(_debugFile).length() > 0;
     if (hasErrors) return true;
 
-    logger.i('Running analyze');
+    logger.i('🔍 Running analyze');
     await ShellService.run('dart fix --apply');
     await ShellService.run('flutter analyze --pub --write=$_debugFile');
 
@@ -81,7 +81,7 @@ class DebugCommand extends Command {
     await errorFile.writeAsString(debugResult);
     if (debugResult.isEmpty) return false;
 
-    logger.i('${errors.length} errors found');
+    logger.i('🪲 ${errors.length} errors found');
     logger.i(errors.toMarkdownList());
     return true;
   }
@@ -93,7 +93,7 @@ class DebugCommand extends Command {
       system: DebugPrompts.checkCode(prompt, files.join()),
       user: 'Check missing implementations',
     );
-    logger.i('Missing implementations:\n $response');
+    logger.i('💭 Missing implementations:\n $response');
     if (response.contains('Nothing found to fix')) return '';
     return '\n## Missing implementations\n$response';
   }
@@ -109,13 +109,13 @@ class DebugCommand extends Command {
       history: history,
     );
     final filesToFix = response.toList();
-    logger.i('Files to fix:\n${filesToFix.toMarkdownList()}');
+    logger.i('⚒️ Files to fix:\n${filesToFix.toMarkdownList()}');
     for (final file in filesToFix) {
       final response = await ApiService().chat(
         user: DebugPrompts.getFile(file as String),
         history: history,
       );
-      logger.i('Fixing $file');
+      logger.i('⚒️ Fixing $file');
       logger.v('Correct code $response');
       await File(file).writeAsString(response);
     }
