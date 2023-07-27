@@ -20,12 +20,12 @@ Exempla of valid answer:
 - path/to/other/file - line xxx: "other name" logic is missing.
 - path/to/other/file - line xxx: "other name" will not working.
 ''';
-  static String filesToFixSystem(String prompt, String files, String errors) =>
+  static String filesToFixSystem(String purpose, String files, String errors) =>
       '''
 As an AI Flutter developer, your task is to fix errors in a Flutter app. You are provided with the following project files and a list of known errors:
 
 ## Project purpose:
-$prompt
+$purpose
 
 ## Project files: 
 $files

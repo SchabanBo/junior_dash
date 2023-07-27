@@ -7,11 +7,10 @@ import 'package:junior_dash/helpers/directory_extension.dart';
 import 'package:junior_dash/helpers/list_extension.dart';
 import 'package:junior_dash/helpers/string_extension.dart';
 import 'package:junior_dash/services/api_service.dart';
+import 'package:junior_dash/services/memory_service.dart';
 
 import '../../helpers/constants.dart';
 import '../../services/shell_service.dart';
-
-const _debugFile = 'debug.md';
 
 class DebugCommand extends Command {
   DebugCommand() {
@@ -57,17 +56,16 @@ class DebugCommand extends Command {
   }
 
   Future<bool> _runAnalyze() async {
-    final hasErrors =
-        await File(_debugFile).exists() && await File(_debugFile).length() > 0;
-    if (hasErrors) return true;
+    final hasErrors = await MemoryService.get(MemoryKeys.debug);
+    if (hasErrors.isNotEmptyOrNull) return true;
 
     logger.i('🔍 Running analyze');
     await ShellService.run('dart fix --apply');
-    await ShellService.run('flutter analyze --pub --write=$_debugFile');
+    await ShellService.run(
+        'flutter analyze --pub --write=${MemoryService.path(MemoryKeys.debug)}');
 
-    /// remove the info from the error.md file
-    final errorFile = File(_debugFile);
-    final lines = await errorFile.readAsLines();
+    /// remove the info level
+    final lines = await MemoryService.get(MemoryKeys.debug);
     final errors = <String>[];
     for (var i = 0; i < lines.length; i++) {
       if (!lines[i].startsWith('[error]')) continue;
@@ -78,7 +76,7 @@ class DebugCommand extends Command {
     var debugResult = errors.toMarkdownList();
     debugResult += await _checkMissingImplementations();
     debugResult = debugResult.trim();
-    await errorFile.writeAsString(debugResult);
+    await MemoryService.set(MemoryKeys.debug, debugResult);
     if (debugResult.isEmpty) return false;
 
     logger.i('🪲 ${errors.length} errors found');
@@ -88,9 +86,9 @@ class DebugCommand extends Command {
 
   Future<String> _checkMissingImplementations() async {
     final files = await Directory('lib').readDartFilesRecursively();
-    final prompt = await File('prompt.md').readAsString();
+    final purpose = await MemoryService.get(MemoryKeys.projectPurpose);
     final response = await ApiService().chat(
-      system: DebugPrompts.checkCode(prompt, files.join()),
+      system: DebugPrompts.checkCode(purpose, files.join()),
       user: 'Check missing implementations',
     );
     logger.i('💭 Missing implementations:\n $response');
@@ -100,27 +98,28 @@ class DebugCommand extends Command {
 
   Future<void> _fix() async {
     final files = await Directory('lib').readDartFilesRecursively();
-    final prompt = await File('prompt.md').readAsString();
-    final errors = await File(_debugFile).readAsString();
+    final purpose = await MemoryService.get(MemoryKeys.projectPurpose);
+    final errors = await MemoryService.get(MemoryKeys.debug);
     final history = <ChatHistory>[];
     final response = await ApiService().chat(
-      system: DebugPrompts.filesToFixSystem(prompt, files.join(), errors),
+      system: DebugPrompts.filesToFixSystem(purpose, files.join(), errors),
       user: DebugPrompts.filesToFixUser(),
       history: history,
     );
     final filesToFix = response.toList();
     logger.i('⚒️ Files to fix:\n${filesToFix.toMarkdownList()}');
     for (final file in filesToFix) {
-      final response = await ApiService().chat(
+      logger.i('⚒️ Fixing $file');
+      var response = await ApiService().chat(
         user: DebugPrompts.getFile(file as String),
         history: history,
       );
-      logger.i('⚒️ Fixing $file');
+      response = response.cleanCodeFences();
       logger.v('Correct code $response');
       await File(file).writeAsString(response);
     }
 
     /// empty the error file
-    await File(_debugFile).writeAsString('');
+    await MemoryService.set(MemoryKeys.debug, '');
   }
 }

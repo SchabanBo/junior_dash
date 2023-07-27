@@ -72,6 +72,7 @@ class ApiService {
       body: jsonEncode({
         "model": EnvService.gtpModelBig,
         "messages": messages,
+        "temperature": 0.1,
       }),
     );
     timer.stop();
@@ -84,7 +85,7 @@ class ApiService {
       final content = body['choices'][0]['message']['content'];
       history.add(ChatHistory(ChatRole.assistant, content));
       usedToken += body['usage']['total_tokens'];
-      return content.toString().cleanCodeFences();
+      return content.toString();
     } else {
       logger.e('Error: ${response.body}');
       logger.d('Request: ${jsonEncode({"messages": messages})}');

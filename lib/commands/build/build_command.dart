@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:args/command_runner.dart';
 import 'package:junior_dash/commands/build/blueprint_model.dart';
+import 'package:junior_dash/helpers/string_extension.dart';
 import 'package:junior_dash/services/memory_service.dart';
 import 'package:junior_dash/services/project_service.dart';
 
@@ -76,6 +77,7 @@ class BuildCommand extends Command {
   }
 
   Future<void> _createProject() async {
+    final timer = Stopwatch()..start();
     logger.i('⚒️ Creating project: $projectName');
     await ShellService.run('flutter create $projectName -e');
     _project = await ProjectService().addProject(
@@ -85,7 +87,7 @@ class BuildCommand extends Command {
 
     Directory.current = _project.path;
     MemoryService.set(MemoryKeys.projectPurpose, purpose);
-    logger.i('⚒️ Project created successfully');
+    logger.i('⚒️ Project created successfully (${timer.elapsed})');
   }
 
   Future<void> _continueProject() async {
@@ -121,6 +123,7 @@ class BuildCommand extends Command {
       logger.i('💭 Blueprint already exists, skipping creation');
       blueprint = Blueprint.fromJson(blueprintStr);
     } else {
+      final timer = Stopwatch()..start();
       final response = await ApiService().chat(
         system: BuildPrompts.blueprint,
         user: 'The App purpose is:\n $purpose',
@@ -128,7 +131,7 @@ class BuildCommand extends Command {
       logger.d('Blueprint response: $response');
       blueprint = Blueprint.fromJson(response);
       await MemoryService.set(MemoryKeys.blueprint, blueprint.toJson());
-      logger.i('💭 Blueprint created successfully');
+      logger.i('💭 Blueprint created successfully (${timer.elapsed})');
     }
     logger.d('Blueprint: ${blueprint.toMarkdown()}');
   }
@@ -138,12 +141,14 @@ class BuildCommand extends Command {
         BuildPrompts.fileContentSystem(purpose, blueprint.toMarkdown());
     for (var fileToGenerate in blueprint.files) {
       if (fileToGenerate.isGenerated) continue;
+      final timer = Stopwatch()..start();
       logger.i('⌨️ Generating file: ${fileToGenerate.name}');
-      final fileContent = await ApiService().chat(
+      var fileContent = await ApiService().chat(
         system: system,
         user: BuildPrompts.fileContentUser(fileToGenerate.name),
       );
 
+      fileContent = fileContent.cleanCodeFences();
       logger.d('File content:\n$fileContent');
       final filePath = fileToGenerate.path;
       final file = File(filePath);
@@ -151,6 +156,7 @@ class BuildCommand extends Command {
       await file.writeAsString(fileContent);
       fileToGenerate.isGenerated = true;
       await MemoryService.set(MemoryKeys.blueprint, blueprint.toJson());
+      logger.i('⌨️ File generated successfully (${timer.elapsed})');
     }
     ProjectService().setProjectDone(projectName);
   }

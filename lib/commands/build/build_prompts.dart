@@ -29,12 +29,6 @@ Your response MUST adhere to the following format (JSON):
             "name": "file_name",
             "path": "file_path",
             "purpose": "file_purpose",
-            "imports": [
-                {
-                    "name": "import_name",
-                    "purpose": "import_purpose"
-                }
-            ],
             "classes": [
                 {
                     "name": "class_name",

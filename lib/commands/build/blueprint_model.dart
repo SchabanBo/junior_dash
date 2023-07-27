@@ -44,18 +44,12 @@ class Blueprint {
     for (final package in pubPackages) {
       addListItem(package);
     }
+    markdown.writeln();
 
     for (final file in files) {
       addHeader('File: ${file.name}', 2);
       addListItem('Path: ${file.path}');
       addListItem('Purpose: ${file.purpose}');
-
-      if (file.imports.isNotEmpty) {
-        addHeader('Imports', 3);
-        for (final import in file.imports) {
-          addListItem('${import.name}: ${import.purpose}');
-        }
-      }
 
       if (file.classes.isNotEmpty) {
         addHeader('Classes', 3);
@@ -75,6 +69,7 @@ class Blueprint {
                   addListItem(
                       '${parameter.name}: ${parameter.type} - ${parameter.purpose}');
                 }
+                markdown.writeln();
               }
 
               addHeader('Return', 7);
@@ -86,9 +81,12 @@ class Blueprint {
                 for (final call in function.calls) {
                   addListItem('${call.name}: ${call.purpose}');
                 }
+                markdown.writeln();
               }
+              markdown.writeln();
             }
           }
+          markdown.writeln();
         }
       }
 
@@ -108,7 +106,6 @@ class BlueprintFile {
   final String name;
   final String path;
   final String purpose;
-  final List<BlueprintImport> imports;
   final List<BlueprintClass> classes;
   bool isGenerated;
 
@@ -116,7 +113,6 @@ class BlueprintFile {
     required this.name,
     required this.path,
     required this.purpose,
-    required this.imports,
     required this.classes,
     this.isGenerated = false,
   });
@@ -127,7 +123,6 @@ class BlueprintFile {
     result.addAll({'name': name});
     result.addAll({'path': path});
     result.addAll({'purpose': purpose});
-    result.addAll({'imports': imports.map((x) => x.toMap()).toList()});
     result.addAll({'classes': classes.map((x) => x.toMap()).toList()});
     result.addAll({'isGenerated': isGenerated});
 
@@ -139,9 +134,6 @@ class BlueprintFile {
       name: map['name'] ?? '',
       path: map['path'] ?? '',
       purpose: map['purpose'] ?? '',
-      imports: List<BlueprintImport>.from(
-        map['imports']?.map((x) => BlueprintImport.fromMap(x)),
-      ),
       classes: List<BlueprintClass>.from(
         map['classes']?.map((x) => BlueprintClass.fromMap(x)),
       ),
